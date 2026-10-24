@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zana\Serialization\Tests;
 
+use Zana\Serialization\Attribute\ErrorMessage;
 use Zana\Serialization\Attribute\Ignore;
 use Zana\Serialization\Attribute\ListOf;
 use Zana\Serialization\Attribute\SerializedName;
@@ -24,6 +25,22 @@ final readonly class Address
 {
     public function __construct(public string $city, public ?string $postcode = null)
     {
+    }
+}
+
+final readonly class Vitals
+{
+    public function __construct(
+        #[SerializedName('height_cm'), ErrorMessage(invalid: 'Must be a number.', missing: 'Height is required.')]
+        public float $heightCm,
+        #[ErrorMessage(invalid: 'Use "f" or "m".')]
+        public ?Sex $sex = null,
+        #[ErrorMessage(missing: 'Tell us where.')]
+        public ?Address $address = null,
+        #[ErrorMessage(invalid: 'Not a valid address.')]
+        public ?Address $home = null,
+        public ?int $pulse = null,
+    ) {
     }
 }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zana\Serialization\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Zana\Serialization\Attribute\ErrorMessage;
 use Zana\Serialization\DenormalizationException;
 use Zana\Serialization\SerializationException;
 use Zana\Serialization\Serializer;
@@ -137,6 +138,41 @@ final class SerializerTest extends TestCase
             $this->assertSame(Patient::class, $e->type);
             $this->assertStringStartsWith('Could not denormalize ' . Patient::class . ' (9 errors): name: This field is missing.', $e->getMessage());
         }
+    }
+
+    public function testErrorMessagesCanBeReplacedPerField(): void
+    {
+        $this->assertSame(['height_cm' => 'Height is required.'], $this->errorsOf([]));
+        $this->assertSame(['height_cm' => 'Must be a number.'], $this->errorsOf(['height_cm' => 'tall']));
+        $this->assertSame(['height_cm' => 'Must be a number.'], $this->errorsOf(['height_cm' => null]), 'null counts as invalid');
+        $this->assertSame(['height_cm' => 'Must be a number.', 'sex' => 'Use "f" or "m".'], $this->errorsOf(['height_cm' => [], 'sex' => 'x']));
+
+        $this->assertSame(['address.city' => 'This field is missing.'], $this->errorsOf(['height_cm' => 1, 'address' => []]), 'nested errors keep their own messages');
+        $this->assertSame(['home' => 'Not a valid address.'], $this->errorsOf(['height_cm' => 1, 'home' => 'Main Street']), 'the field itself is replaced');
+        $this->assertSame(['pulse' => 'This value should be of type int.'], $this->errorsOf(['height_cm' => 1, 'pulse' => 'fast']), 'fields without the attribute keep the defaults');
+
+        $vitals = $this->serializer->denormalize(['height_cm' => '170', 'sex' => 'f'], Vitals::class);
+        $this->assertSame(170.0, $vitals->heightCm);
+        $this->assertSame(Sex::Female, $vitals->sex);
+
+        $this->expectException(\InvalidArgumentException::class);
+        new ErrorMessage();
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, string>
+     */
+    private function errorsOf(array $data): array
+    {
+        try {
+            $this->serializer->denormalize($data, Vitals::class);
+        } catch (DenormalizationException $e) {
+            return $e->errors();
+        }
+
+        return [];
     }
 
     public function testUnionTypesKeepMatchingValuesThenTryConversions(): void

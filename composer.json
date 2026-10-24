@@ -8,8 +8,12 @@
         "php": "^8.5"
     },
     "require-dev": {
+        "mj-zana/core": "^2.0",
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^11.5"
+    },
+    "suggest": {
+        "mj-zana/core": "To register the Serializer with SerializationServiceProvider"
     },
     "autoload": {
         "psr-4": {
@@ -22,6 +26,11 @@
         },
         "files": ["tests/Fixtures.php"]
     },
+    "repositories": [
+        { "type": "path", "url": "../zana-container", "options": { "symlink": true, "versions": { "mj-zana/container": "2.0.0" } } },
+        { "type": "path", "url": "../zana-configuration", "options": { "symlink": true, "versions": { "mj-zana/configuration": "2.0.0" } } },
+        { "type": "path", "url": "../zana-core", "options": { "symlink": true, "versions": { "mj-zana/core": "2.0.0" } } }
+    ],
     "scripts": {
         "test": "phpunit",
         "analyse": "phpstan analyse --memory-limit=1G"

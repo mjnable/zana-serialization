@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zana\Serialization;
 
+use Zana\Serialization\Attribute\ErrorMessage;
 use Zana\Serialization\Attribute\Ignore;
 use Zana\Serialization\Attribute\ListOf;
 use Zana\Serialization\Attribute\SerializedName;
@@ -237,6 +238,8 @@ final class Serializer
             $name = self::nameOf($parameter);
             $childPath = $path === '' ? $name : "{$path}.{$name}";
 
+            $messages = ($parameter->getAttributes(ErrorMessage::class)[0] ?? null)?->newInstance();
+
             if (!array_key_exists($name, $value)) {
                 if ($parameter->isDefaultValueAvailable()) {
                     continue;
@@ -245,13 +248,17 @@ final class Serializer
                     $arguments[$parameter->getName()] = null;
                     continue;
                 }
-                $this->error($childPath, 'This field is missing.', $errors);
+                $this->error($childPath, $messages->missing ?? 'This field is missing.', $errors);
                 $failed = true;
                 continue;
             }
 
             $converted = $this->denormalizeTyped($value[$name], $parameter, $childPath, $errors);
             if ($converted === $this->invalid) {
+                // Only the field's own error is replaced; nested paths keep theirs.
+                if ($messages?->invalid !== null && array_key_exists($childPath, $errors)) {
+                    $errors[$childPath] = $messages->invalid;
+                }
                 $failed = true;
                 continue;
             }
