@@ -3,6 +3,13 @@
 All Zana packages share one version number and are released together. A release that did
 not change this package is not listed.
 
+## 2.10.0 — 2026-11-01
+
+### Added
+
+- `DenormalizationExceptionMapper`: with mj-zana/http, a `DenormalizationException` (a missing or
+  mistyped field) is a 422 with `errors` per field (ADR-025). Registered only when http is installed.
+
 ## 2.4.0 — 2026-10-26
 
 ### Changed
